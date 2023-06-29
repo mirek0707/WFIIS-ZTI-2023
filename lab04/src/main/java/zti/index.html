@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Ajax: Serwis RESTful</title>
+  <script type="text/javascript">
+    var url = "http://localhost:8083/lab04-1.0-SNAPSHOT/api/jpa/person";
+    // Lista rekordow w bazie
+    function _list() {
+      document.getElementById('data').innerHTML = ""
+      document.getElementById('result').innerHTML = ""
+      fetch( url )
+              .then ( response => {
+                response.json().then ( data => {
+                  var txt = "" ;
+                  for ( let i=0; i<data.length ; i++)
+                    txt += data[i].fname + " " + data[i].lname + "<br/>" ;
+                  document.getElementById('data').innerHTML = '';
+                  document.getElementById('result').innerHTML = txt ;
+                }) ;
+              })
+    }
+    function _ins_form() {
+      let form = `
+        <form id="addRecordForm">
+            <label for="fname">Imię:</label>
+            <input type="text" id="fname" name="fname"><br><br>
+            <label for="fname">Nazwisko:</label>
+            <input type="text" id="lname" name="lname"><br><br>
+            <label for="city">Miasto:</label>
+            <input type="text" id="city" name="city"><br><br>
+            <label for="email">Email:</label>
+            <input type="email" id="email" name="email"><br><br>
+            <label for="tel">Telefon:</label>
+            <input type="text" id="tel" name="tel"><br><br>
+            <button type="submit">Dodaj</button>
+        </form>`
+      document.getElementById('data').innerHTML = ""
+      document.getElementById('result').innerHTML = ""
+      document.getElementById('data').innerHTML = form
+      document.getElementById('addRecordForm').addEventListener('submit', function (event){
+        event.preventDefault()
+        let fname = document.getElementById('fname').value
+        let lname = document.getElementById('lname').value
+        let city = document.getElementById('city').value
+        let email = document.getElementById('email').value
+        let tel = document.getElementById('tel').value
+        let data = {fname, lname, city, email, tel}
+        fetch(url, {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify(data)
+        }).then(response =>{
+          if (response.ok){
+            document.getElementById('result').innerHTML = "Rekord dodany"
+          } else {
+            document.getElementById('result').innerHTML = "Rekord nie został dodany"
+          }
+        }).catch(error =>{
+          alert('error')
+        })
+      })
+
+    }
+    function _del_list() {
+      let form = `
+        <form id="deleteRecordForm">
+            <label for="id">Identyfikator rekordu:</label>
+            <input type="text" id="id" name="id"><br><br>
+            <button type="submit">Usuń</button>
+        </form`
+      document.getElementById('data').innerHTML = ""
+      document.getElementById('result').innerHTML = ""
+      document.getElementById('data').innerHTML = form
+      document.getElementById('deleteRecordForm').addEventListener('submit', function(event) {
+        event.preventDefault()
+        let id = document.getElementById('id').value
+        fetch(url + '/' + id, {
+          method: 'DELETE'
+        }).then(response => {
+          if (response.ok) {
+            document.getElementById('result').innerHTML = "Rekord usunięty"
+            _list()
+          } else {
+            document.getElementById('result').innerHTML = "Rekord nie został usunięty"
+          }
+        }).catch(error => {
+          alert('error')
+        })
+      })
+    }
+    function _upd_list() {
+      document.getElementById('data').innerHTML = "";
+      document.getElementById('result').innerHTML = "";
+      fetch(url)
+        .then(response => {
+          response.json().then(data => {
+            var select = "<select id='recordSelect'>";
+            for (let i = 0; i < data.length; i++) {
+              select += `<option value="${data[i].id}">${data[i].fname} ${data[i].lname}</option>`;
+            }
+            select += "</select><br><br><button id='editRecordBtn' type='button'>Edytuj</button>";
+            document.getElementById('data').innerHTML = select;
+
+            document.getElementById('editRecordBtn').addEventListener('click', function(event) {
+              event.preventDefault();
+              let recordId = document.getElementById('recordSelect').value;
+              fetch(url + "/" + recordId)
+                .then(response => {
+                  response.json().then(data => {
+                    let form = `
+                      <form id="editRecordForm">
+                        <input type="hidden" id="id" name="id" value="${data.id}">
+                        <label for="fname">Imię:</label>
+                        <input type="text" id="fname" name="fname" value="${data.fname}"><br><br>
+                        <label for="lname">Nazwisko:</label>
+                        <input type="text" id="lname" name="lname" value="${data.lname}"><br><br>
+                        <label for="city">Miasto:</label>
+                        <input type="text" id="city" name="city" value="${data.city}"><br><br>
+                        <label for="email">Email:</label>
+                        <input type="email" id="email" name="email" value="${data.email}"><br><br>
+                        <label for="tel">Telefon:</label>
+                        <input type="text" id="tel" name="tel" value="${data.tel}"><br><br>
+                        <button type="submit">Zapisz zmiany</button>
+                      </form>`;
+                document.getElementById('data').innerHTML = form;
+                document.getElementById('editRecordForm').addEventListener('submit', function(event) {
+                  event.preventDefault();
+                  let id = document.getElementById('id').value;
+                  let fname = document.getElementById('fname').value;
+                  let lname = document.getElementById('lname').value;
+                  let city = document.getElementById('city').value;
+                  let email = document.getElementById('email').value;
+                  let tel = document.getElementById('tel').value;
+                  let data = {id, fname, lname, city, email, tel};
+                  fetch(url, {
+                    method: 'PUT',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(data)
+                  }).then(response => {
+                    if (response.ok) {
+                      document.getElementById('result').innerHTML = "Rekord zaktualizowany";
+                    } else {
+                      document.getElementById('result').innerHTML = "Rekord nie został zaktualizowany";
+                    }
+                  }).catch(error => {
+                    alert('error');
+                  });
+                });
+              });
+            });
+          });
+        });
+      });
+    }
+  </script>
+</head>
+<body>
+<div style="text-align:center" >
+  <table border="1" bgcolor="gray">
+    <tr><th><big>Test serwisu REST JAX-RS. Operacje CRUD.</big></th></tr>
+  </table>
+  <br />
+  <form action="#">
+    <table><tr>
+      <td><input type="button" value="Pobranie danych z bazy" onclick="_list()"/></td>
+      <td><input type="button" value="Dodanie rekordu do bazy" onclick="_ins_form()"/></td>
+      <td><input type="button" value="Usuniecie rekordu z bazy" onclick="_del_list()"/></td>
+      <td><input type="button" value="Poprawa rekordu w bazie" onclick="_upd_list()"/></td>
+    </tr></table>
+  </form>
+</div>
+<div id="data"></div>
+<div id="result"></div>
+</body>
+</html>
